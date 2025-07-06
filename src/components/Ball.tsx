@@ -1,5 +1,6 @@
 import { ballSpeed, boardHeight } from '@/constants';
 import { useGameContext } from '@/GameContext';
+import { getResetPositionAndDirection } from '@/utils';
 import { useWindowDimensions } from 'react-native';
 import Animated, {
   runOnJS,
@@ -9,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 export default function Ball() {
-  const { ball, isUserTurn, onEndTurn } = useGameContext();
+  const { ball, isUserTurn, onEndTurn, blocks } = useGameContext();
 
   const { width } = useWindowDimensions();
 
@@ -35,16 +36,13 @@ export default function Ball() {
     }
 
     if (x > width - r) {
-      // right wall
       dx *= -1;
       x = width - r;
     }
     if (x < r) {
-      // left wall
       dx *= -1;
       x = r;
     }
-
     ball!.value = {
       ...ball!.value,
       x,
@@ -52,6 +50,22 @@ export default function Ball() {
       dy,
       dx,
     };
+
+    // check collision with blocks
+    blocks!.modify((blocks) => {
+      blocks
+        .filter((block) => block.val > 0)
+        .some((block) => {
+          const newBallData = getResetPositionAndDirection(ball!.value, block);
+          if (newBallData) {
+            ball!.value = newBallData;
+            block.val -= 1;
+            return true;
+          }
+        });
+
+      return blocks;
+    });
   }, false);
 
   const startFrameCallback = (val: boolean) => {
@@ -65,11 +79,10 @@ export default function Ball() {
 
   const ballStyles = useAnimatedStyle(() => {
     const { x, y, r } = ball!.value;
-    // running on the UI
+    
     return {
       left: x - r,
       top: y - r,
-      // static
       width: r * 2,
       aspectRatio: 1,
       backgroundColor: 'white',
