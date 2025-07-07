@@ -1,6 +1,15 @@
 import { BallData, BlockData } from './types';
 import { blocksPerRow, blockW } from './constants';
 
+const getBlockBoundaries = (block: BlockData) => {
+  'worklet';
+
+  return {
+    blockRight: block.x + block.w,
+    blockBottom: block.y + block.w,
+  };
+}
+
 export const generateBlocksRow = (row: number) => {
   'worklet';
   const blocks: BlockData[] = [];
@@ -9,11 +18,13 @@ export const generateBlocksRow = (row: number) => {
     const shouldAdd = Math.random() < 0.5;
 
     if (shouldAdd) {
+      const val = Math.ceil(Math.random() * 3);
+
       blocks.push({
         x: col * (blockW + 10) + 5,
         y: row * (blockW + 10) + 5,
         w: blockW,
-        val: 1,
+        val,
       });
     }
   }
@@ -75,10 +86,3 @@ export const getResetPositionAndDirection = (
   // In case of a collision but no clear side is detected
   return null;
 };
-
-function getBlockBoundaries(block: BlockData) {
-  return {
-    blockRight: block.x + block.w,
-    blockBottom: block.y + block.w,
-  };
-}
